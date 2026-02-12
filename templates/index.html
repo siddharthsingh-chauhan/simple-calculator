@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="input" id="input">0</div>
+            <div class="result" id="result"></div>
+        </div>
+        <div class="buttons">
+            <button class="btn number" data-value="7">7</button>
+            <button class="btn number" data-value="8">8</button>
+            <button class="btn number" data-value="9">9</button>
+            <button class="btn operator" data-op="divide">&divide;</button>
+
+            <button class="btn number" data-value="4">4</button>
+            <button class="btn number" data-value="5">5</button>
+            <button class="btn number" data-value="6">6</button>
+            <button class="btn operator" data-op="multiply">&times;</button>
+
+            <button class="btn number" data-value="1">1</button>
+            <button class="btn number" data-value="2">2</button>
+            <button class="btn number" data-value="3">3</button>
+            <button class="btn operator" data-op="subtract">&minus;</button>
+
+            <button class="btn clear" id="clear">C</button>
+            <button class="btn number" data-value="0">0</button>
+            <button class="btn equals" id="equals">=</button>
+            <button class="btn operator" data-op="add">+</button>
+        </div>
+    </div>
+
+    <script>
+        // Calculator state
+        let currentInput = '0';
+        let firstOperand = null;
+        let currentOperation = null;
+        let shouldResetInput = false;
+
+        // DOM elements
+        const inputDisplay = document.getElementById('input');
+        const resultDisplay = document.getElementById('result');
+
+        // Update the display
+        function updateDisplay() {
+            inputDisplay.textContent = currentInput;
+        }
+
+        // Handle number button clicks
+        document.querySelectorAll('.number').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = btn.dataset.value;
+
+                if (shouldResetInput) {
+                    currentInput = value;
+                    shouldResetInput = false;
+                } else if (currentInput === '0') {
+                    currentInput = value;
+                } else {
+                    currentInput += value;
+                }
+                updateDisplay();
+            });
+        });
+
+        // Handle operator button clicks
+        document.querySelectorAll('.operator').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (firstOperand !== null && !shouldResetInput) {
+                    // Chain operations
+                    performCalculation();
+                }
+                firstOperand = parseFloat(currentInput);
+                currentOperation = btn.dataset.op;
+                shouldResetInput = true;
+                resultDisplay.textContent = currentInput + ' ' + btn.textContent;
+            });
+        });
+
+        // Handle equals button
+        document.getElementById('equals').addEventListener('click', () => {
+            if (firstOperand !== null && currentOperation) {
+                performCalculation();
+            }
+        });
+
+        // Handle clear button
+        document.getElementById('clear').addEventListener('click', () => {
+            currentInput = '0';
+            firstOperand = null;
+            currentOperation = null;
+            shouldResetInput = false;
+            resultDisplay.textContent = '';
+            updateDisplay();
+        });
+
+        // Perform calculation via API
+        async function performCalculation() {
+            const num1 = firstOperand;
+            const num2 = parseFloat(currentInput);
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        num1: num1,
+                        num2: num2,
+                        operation: currentOperation
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDisplay.textContent = 'Error: ' + data.error;
+                    currentInput = '0';
+                } else {
+                    resultDisplay.textContent = num1 + ' ' + getOperatorSymbol(currentOperation) + ' ' + num2 + ' =';
+                    currentInput = String(data.result);
+                }
+
+                updateDisplay();
+                firstOperand = null;
+                currentOperation = null;
+                shouldResetInput = true;
+
+            } catch (error) {
+                resultDisplay.textContent = 'Error: Connection failed';
+            }
+        }
+
+        // Get operator symbol for display
+        function getOperatorSymbol(op) {
+            const symbols = {
+                'add': '+',
+                'subtract': '−',
+                'multiply': '×',
+                'divide': '÷'
+            };
+            return symbols[op] || op;
+        }
+    </script>
+</body>
+</html>
