@@ -1,4 +1,5 @@
-from calculator import add, subtract
+import pytest
+from calculator import add, subtract, multiply, divide
 
 
 def test_add_positive_numbers():
@@ -35,3 +36,42 @@ def test_subtract_zeros():
 
 def test_subtract_negative_numbers():
     assert subtract(-5, -3) == -2
+
+
+# Multiply tests
+def test_multiply_positive_numbers():
+    assert multiply(3, 4) == 12
+
+
+def test_multiply_by_zero():
+    assert multiply(5, 0) == 0
+
+
+def test_multiply_negative_numbers():
+    assert multiply(-3, -4) == 12
+
+
+def test_multiply_mixed_numbers():
+    assert multiply(-3, 4) == -12
+
+
+# Divide tests
+def test_divide_positive_numbers():
+    assert divide(10, 2) == 5
+
+
+def test_divide_with_remainder():
+    assert divide(7, 2) == 3.5
+
+
+def test_divide_negative_numbers():
+    assert divide(-10, -2) == 5
+
+
+def test_divide_mixed_numbers():
+    assert divide(-10, 2) == -5
+
+
+def test_divide_by_zero():
+    with pytest.raises(ValueError, match="Cannot divide by zero"):
+        divide(10, 0)
